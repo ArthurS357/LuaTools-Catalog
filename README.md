@@ -29,8 +29,8 @@ names, so the GUI's existing `DenuvoListingsResponse` reads it unchanged (extra 
       "header_image": "https://…/header.jpg",   // https or null
       "fixCount": 1,
       "tags": [ /* full tag objects, all present in tags[] */ ],
-      "source": "lua.tools"                     // or "orphan"
-      // "orphan" entries also carry:
+      "source": "lua.tools"                     // or "orphan" (only in orphaned_fixes.json) or "merged" (in both)
+      // "orphan" and "merged" entries also carry:
       // "fixes": [ {
       //   "id": "online-1", "title": "…", "description": null,
       //   "tags": [ /* tag objects */ ],
@@ -45,8 +45,8 @@ names, so the GUI's existing `DenuvoListingsResponse` reads it unchanged (extra 
 ```
 
 `lua.tools` entries carry **no** download links: their fixes are still listed per game by
-`/api/denuvo/fixes` and downloaded through the signed, authenticated `/api/denuvo/download`. Only `orphan`
-entries have `downloads`, and those are plain public https links, each pinned by a SHA-256.
+`/api/denuvo/fixes` and downloaded through the signed, authenticated `/api/denuvo/download`. Only the fixes in
+`orphan`/`merged` entries have `downloads`, and those are plain public https links, each pinned by a SHA-256.
 
 ## `orphaned_fixes.json` (what you edit)
 
@@ -79,9 +79,11 @@ entries have `downloads`, and those are plain public https links, each pinned by
 At least one of `manifest` / `fix` per fix. `manifest` files end in `.zip` or `.lua`; `fix` files in `.zip`.
 Unknown fields are rejected on purpose (a typo such as `sha26` must not slip through).
 
-**Priority:** if an `appid` is in both files, the orphan entry **replaces** the `lua.tools` entry entirely
-(the run log lists the overridden appids). A game with real `lua.tools` fixes should therefore only be
-overridden deliberately.
+**Same `appid` in both:** the two are **merged**, never replaced. The game keeps the `lua.tools` name, image and
+tags (plus yours), `source` becomes `"merged"`, `fixes[]` lists only your fixes and `fixCount` is the official
+count plus yours. The `lua.tools` listing carries no fix ids, so the catalog cannot de-duplicate against the
+official fixes; the GUI does it when it lists a game's fixes (official first, a repeated id is dropped). Within
+the merge itself, fixes are concatenated official-first and a repeated id keeps the first.
 
 ## Rules the script enforces (fail-closed)
 

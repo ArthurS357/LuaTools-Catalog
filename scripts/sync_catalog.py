@@ -48,7 +48,7 @@ _SECRET_PARAM = re.compile(
     re.IGNORECASE,
 )
 _SLOT_EXTENSIONS = {"manifest": (".zip", ".lua"), "fix": (".zip",)}
-_SOURCES = ("lua.tools", "orphan")
+_SOURCES = ("lua.tools", "orphan", "merged")  # merged = in lua.tools AND orphaned_fixes.json
 
 
 class CatalogError(Exception):
@@ -219,8 +219,32 @@ def _orphan_game(raw: Any, by_slug: dict[str, JsonObj], where: str) -> JsonObj:
 # ── Merge + final validation ─────────────────────────────────────────────────
 
 
+def _combine(official: JsonObj, orphan: JsonObj) -> JsonObj:
+    """One game in both sources: the official entry's identity, the union of fixes and tags.
+
+    Fixes are concatenated official-first and de-duplicated by id (the first one wins), so an orphan fix can
+    add to what lua.tools has but never replace it. The listing carries only a fixCount, no fix ids, so the
+    count grows by the orphan fixes that were not already there; ids of the official fixes are only known to
+    the GUI, which repeats this de-duplication when it lists a game's fixes.
+    """
+    known = list(official.get("fixes", []))
+    fixes: dict[Any, JsonObj] = {}
+    for fix in [*known, *orphan["fixes"]]:
+        fixes.setdefault(fix["id"], fix)  # first wins: official before orphan
+    tags = {t["id"]: t for t in [*official["tags"], *orphan["tags"]]}
+    return {
+        "appid": official["appid"],
+        "name": official["name"],
+        "header_image": official["header_image"],
+        "fixCount": official["fixCount"] + len(fixes) - len(known),
+        "tags": list(tags.values()),
+        "source": "merged",
+        "fixes": list(fixes.values()),
+    }
+
+
 def merge(upstream_games: list[JsonObj], upstream_tags: list[JsonObj], orphans: JsonObj) -> JsonObj:
-    """lua.tools + orphans. On the same appid the orphan entry replaces the lua.tools one entirely."""
+    """lua.tools + orphans. A game in both is merged (see _combine); a game only in orphans is added."""
     by_slug = {t["slug"]: t for t in upstream_tags}
     tags = list(upstream_tags)
     for i, raw in enumerate(orphans.get("tags", [])):
@@ -240,7 +264,8 @@ def merge(upstream_games: list[JsonObj], upstream_tags: list[JsonObj], orphans: 
         game = _orphan_game(raw, by_slug, f"orphans.games[{i}]")
         _need(game["appid"] not in seen, f"orphans.games[{i}]: appid {game['appid']!r} appears twice")
         seen.add(game["appid"])
-        by_appid[game["appid"]] = game  # orphan priority
+        official = by_appid.get(game["appid"])
+        by_appid[game["appid"]] = game if official is None else _combine(official, game)
     # (length, text) sorts digit strings numerically without trusting the appid to be a number yet.
     games = sorted(by_appid.values(), key=lambda g: (len(str(g["appid"])), str(g["appid"])))
     return {"schema_version": SCHEMA_VERSION, "tags": tags, "games": games}
@@ -326,12 +351,13 @@ def _validate_game(game: Any, tag_ids: set[str], where: str) -> None:
         _validate_tag(tag, f"{where}.tags")
         _need(tag["id"] in tag_ids, f"{where}: tag {tag['slug']!r} is not in the catalogue")
     _need(game["source"] in _SOURCES, f"{where}.source: one of {_SOURCES}")
-    if game["source"] == "orphan":
+    if game["source"] in ("orphan", "merged"):
         fixes = game.get("fixes")
-        _need(
-            isinstance(fixes, list) and bool(fixes) and game["fixCount"] == len(fixes),
-            f"{where}: fixCount must equal len(fixes)",
-        )
+        _need(isinstance(fixes, list) and bool(fixes), f"{where}: fixes must be a non-empty list")
+        if game["source"] == "orphan":
+            _need(game["fixCount"] == len(fixes), f"{where}: fixCount must equal len(fixes)")
+        else:  # the official fixes are counted but not listed
+            _need(game["fixCount"] >= len(fixes), f"{where}: fixCount must be at least len(fixes)")
         ids = [f.get("id") if isinstance(f, dict) else None for f in fixes]
         _need(len(set(ids)) == len(ids), f"{where}: duplicate fix id")
         for i, fix in enumerate(fixes):
@@ -383,7 +409,7 @@ def _read_previous(path: Path) -> JsonObj | None:
 
 def _upstream_count(previous: JsonObj | None) -> int:
     try:
-        return sum(1 for g in (previous or {}).get("games", []) if g.get("source") == "lua.tools")
+        return sum(1 for g in (previous or {}).get("games", []) if g.get("source") in ("lua.tools", "merged"))
     except (TypeError, AttributeError):
         return 0  # a damaged previous file cannot veto the next sync
 
@@ -419,9 +445,9 @@ def run(
         print(f"ABORT (catalog.json untouched): {exc}", file=sys.stderr)
         return 1
 
-    orphan_ids = {g["appid"] for g in doc["games"] if g["source"] == "orphan"}
-    overridden = sorted(orphan_ids & {g["appid"] for g in up_games}, key=int)
-    print(f"lua.tools: {len(up_games)} games, orphans: {len(orphan_ids)}, overridden: {overridden}")
+    added = sorted((g["appid"] for g in doc["games"] if g["source"] == "orphan"), key=int)
+    merged = sorted((g["appid"] for g in doc["games"] if g["source"] == "merged"), key=int)
+    print(f"lua.tools: {len(up_games)} games, orphans added: {added}, merged into lua.tools games: {merged}")
 
     if previous is not None and {k: v for k, v in previous.items() if k != "generated_at"} == doc:
         print("catalog.json unchanged")
@@ -438,6 +464,18 @@ def run(
     return 0
 
 
+def _as_official(game: JsonObj) -> JsonObj:
+    """Undo _combine on a previous catalog entry, so --check can merge the (possibly edited) orphans again."""
+    if game["source"] != "merged":
+        return game
+    return {
+        **{k: v for k, v in game.items() if k != "fixes"},
+        "fixCount": game["fixCount"] - len(game["fixes"]),
+        "tags": [t for t in game["tags"] if not t["id"].startswith("local-")],
+        "source": "lua.tools",
+    }
+
+
 def check(catalog: Path, orphans: Path) -> int:
     """Offline: merge orphaned_fixes.json into the lua.tools part of the current catalog.json."""
     previous = _read_previous(catalog)
@@ -445,7 +483,7 @@ def check(catalog: Path, orphans: Path) -> int:
         print(f"CHECK FAILED: {catalog.name} is needed for --check and is not readable", file=sys.stderr)
         return 1
     try:
-        up_games = [g for g in previous["games"] if g["source"] == "lua.tools"]
+        up_games = [_as_official(g) for g in previous["games"] if g["source"] != "orphan"]
         up_tags = [t for t in previous["tags"] if not t["id"].startswith("local-")]
         validate_catalog(merge(up_games, up_tags, load_orphans(orphans)))
     except (CatalogError, KeyError, TypeError) as exc:

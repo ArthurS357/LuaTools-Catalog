@@ -91,16 +91,50 @@ def test_orphan_game_is_added_next_to_the_lua_tools_games(paths: tuple[Path, Pat
     assert games["200"]["fixCount"] == 1
 
 
-def test_orphan_overrides_the_lua_tools_entry_for_the_same_appid(paths: tuple[Path, Path]) -> None:
-    write_orphans(paths[1], [orphan_game("100", "Orphan wins")])
+def test_orphan_is_merged_into_the_lua_tools_entry_for_the_same_appid(paths: tuple[Path, Path]) -> None:
+    """Was 'orphan replaces the entry' until the F2 phase 2 decision: an orphan must not hide official fixes."""
+    write_orphans(paths[1], [orphan_game("100", "Orphan name")])
 
     assert sync(paths, upstream_body(upstream_game("100", "Upstream"), upstream_game("101", "Other"))) == 0
 
     games = by_appid(read(paths[0]))
-    assert games["100"]["name"] == "Orphan wins"
-    assert games["100"]["source"] == "orphan"
+    merged = games["100"]
+    assert merged["source"] == "merged"
+    assert merged["name"] == "Upstream"  # the official identity is kept
+    assert merged["header_image"].startswith("https://cdn.example.com/100/")
+    assert merged["fixCount"] == 2 + 1  # the 2 official fixes plus the orphan one
+    assert [f["id"] for f in merged["fixes"]] == ["online-1"]  # only ours are listed; the GUI adds the official
+    assert {t["slug"] for t in merged["tags"]} == {"generic", "online-fix"}
     assert games["101"]["name"] == "Other"  # untouched
     assert len(games) == 2
+
+
+def test_combine_concatenates_fixes_official_first_and_drops_duplicate_ids() -> None:
+    official = {
+        "appid": "100", "name": "Official", "header_image": None, "fixCount": 2,
+        "tags": [TAGS[0]], "source": "lua.tools",
+        "fixes": [{"id": "a", "title": "official a"}, {"id": "b", "title": "official b"}],
+    }  # fmt: skip
+    orphan = {"fixes": [{"id": "b", "title": "orphan b"}, {"id": "c", "title": "orphan c"}], "tags": [TAGS[1]]}
+
+    combined = sc._combine(official, orphan)
+
+    assert [(f["id"], f["title"]) for f in combined["fixes"]] == [
+        ("a", "official a"), ("b", "official b"), ("c", "orphan c"),
+    ]  # fmt: skip
+    assert combined["fixCount"] == 3  # 2 + only the new one
+    assert combined["source"] == "merged"
+
+
+def test_merged_entry_survives_a_check_run_and_a_second_sync_is_unchanged(paths: tuple[Path, Path]) -> None:
+    write_orphans(paths[1], [orphan_game("100")])
+    body = upstream_body(upstream_game("100", "Upstream"))
+    assert sync(paths, body) == 0
+    before = paths[0].read_bytes()
+
+    assert sc.check(paths[0], paths[1]) == 0  # rebuilds the official entry from the merged one
+    assert sync(paths, body) == 0
+    assert paths[0].read_bytes() == before
 
 
 def test_orphan_tags_resolve_against_upstream_and_new_local_tags_are_added(paths: tuple[Path, Path]) -> None:
