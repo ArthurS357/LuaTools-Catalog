@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-20T18:07:25Z",
+  "generated_at": "2026-11-21T23:41:28Z",
   "tags": [
     {
       "id": "fe3f2ad5-a66d-4fa1-8d08-c01dfc39e303",
@@ -4326,6 +4326,33 @@
         }
       ],
       "source": "lua.tools"
+    },
+    {
+      "appid": "391540",
+      "name": "Undertale",
+      "header_image": "https://cdn.akamai.steamstatic.com/steam/apps/391540/header.jpg",
+      "fixCount": 1,
+      "tags": [],
+      "source": "orphan",
+      "fixes": [
+        {
+          "id": "f2-test-undertale",
+          "title": "F2 test fix (Undertale)",
+          "description": "Harmless test artifact for the F2 live test.",
+          "tags": [],
+          "hasManifest": false,
+          "hasFix": true,
+          "manifestFilename": null,
+          "fixFilename": "undertale-f2-test.zip",
+          "createdAt": "2026-11-21",
+          "downloads": {
+            "fix": {
+              "url": "https://github.com/ArthurS357/LuaTools-Catalog/releases/download/f2-test/undertale-f2-test.zip",
+              "sha256": "b795a872bb8e53ac630a69fbf22b0447d5440ded4ada23617796c145683b7fd8"
+            }
+          }
+        }
+      ]
     },
     {
       "appid": "392110",
