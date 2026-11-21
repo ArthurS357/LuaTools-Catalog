@@ -297,7 +297,6 @@ def test_orphan_download_urls_must_be_plain_public_https(paths: tuple[Path, Path
     [
         lambda g: g["fixes"][0]["fix"].pop("sha256"),
         lambda g: g["fixes"][0]["fix"].update(sha256="ABC"),
-        lambda g: g["fixes"][0]["fix"].update(sha256="A" * 64),  # lowercase only
         lambda g: g["fixes"][0]["fix"].update(filename="../evil.zip"),
         lambda g: g["fixes"][0]["fix"].update(filename="fix.exe"),
         lambda g: g["fixes"][0].update(tags=["no-such-tag"]),
@@ -310,7 +309,6 @@ def test_orphan_download_urls_must_be_plain_public_https(paths: tuple[Path, Path
     ids=[
         "no-sha",
         "short-sha",
-        "uppercase-sha",
         "path-filename",
         "exe",
         "unknown-tag",
@@ -328,6 +326,16 @@ def test_bad_orphan_entries_abort(paths: tuple[Path, Path], mutate: Any) -> None
 
     assert sync(paths, upstream_body(upstream_game("100", "Upstream"))) == 1
     assert not paths[0].exists()
+
+
+def test_uppercase_sha256_from_get_filehash_is_accepted_and_stored_lowercase(paths: tuple[Path, Path]) -> None:
+    game = orphan_game("200")
+    game["fixes"][0]["fix"]["sha256"] = "AB" * 32
+    write_orphans(paths[1], [game])
+
+    assert sync(paths, upstream_body(upstream_game("100", "Upstream"))) == 0
+
+    assert by_appid(read(paths[0]))["200"]["fixes"][0]["downloads"]["fix"]["sha256"] == "ab" * 32
 
 
 def test_the_same_appid_twice_in_the_orphans_file_aborts(paths: tuple[Path, Path]) -> None:

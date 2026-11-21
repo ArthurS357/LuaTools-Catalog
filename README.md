@@ -97,7 +97,7 @@ The run aborts with exit code 1 and leaves `catalog.json` byte-for-byte as it wa
 Nothing unknown from upstream is forwarded: games are rebuilt from a whitelist of fields. Every URL in the
 output must be `https`, a real public host (no IP literal, `localhost`, single-label or `.local` name), with
 no credentials and **no query parameter that looks signed** (`signature`, `x-amz-*`, `token`, `expires`, `key`,
-`auth`, …). Orphan downloads require a lowercase SHA-256, so the consumer can verify before applying.
+`auth`, …). Orphan downloads require a SHA-256 (64 hex characters, any case; stored lowercase), so the consumer can verify before applying.
 
 ## Local use
 

@@ -180,7 +180,8 @@ def _orphan_fix(raw: Any, by_slug: dict[str, JsonObj], where: str) -> JsonObj:
             continue
         _need(isinstance(item, dict), f"{where}.{slot}: must be an object")
         _only_keys(item, {"url", "sha256", "filename"}, f"{where}.{slot}")
-        downloads[slot] = {"url": item.get("url"), "sha256": item.get("sha256")}
+        sha256 = item.get("sha256")  # Get-FileHash prints uppercase; the schema stores lowercase
+        downloads[slot] = {"url": item.get("url"), "sha256": sha256.lower() if isinstance(sha256, str) else sha256}
         filenames[slot] = item.get("filename")
     return {
         "id": raw.get("id"),
