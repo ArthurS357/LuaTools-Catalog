@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-21T23:41:28Z",
+  "generated_at": "2026-11-22T00:59:57Z",
   "tags": [
     {
       "id": "fe3f2ad5-a66d-4fa1-8d08-c01dfc39e303",
@@ -4326,33 +4326,6 @@
         }
       ],
       "source": "lua.tools"
-    },
-    {
-      "appid": "391540",
-      "name": "Undertale",
-      "header_image": "https://cdn.akamai.steamstatic.com/steam/apps/391540/header.jpg",
-      "fixCount": 1,
-      "tags": [],
-      "source": "orphan",
-      "fixes": [
-        {
-          "id": "f2-test-undertale",
-          "title": "F2 test fix (Undertale)",
-          "description": "Harmless test artifact for the F2 live test.",
-          "tags": [],
-          "hasManifest": false,
-          "hasFix": true,
-          "manifestFilename": null,
-          "fixFilename": "undertale-f2-test.zip",
-          "createdAt": "2026-11-21",
-          "downloads": {
-            "fix": {
-              "url": "https://github.com/ArthurS357/LuaTools-Catalog/releases/download/f2-test/undertale-f2-test.zip",
-              "sha256": "b795a872bb8e53ac630a69fbf22b0447d5440ded4ada23617796c145683b7fd8"
-            }
-          }
-        }
-      ]
     },
     {
       "appid": "392110",
@@ -28574,7 +28547,7 @@
       "appid": "5335510",
       "name": "Moon Sweepers",
       "header_image": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/5335510/41e1e802dfc069cc245b91043e451a2f9ffa80e3/header.jpg?t=1792950881",
-      "fixCount": 1,
+      "fixCount": 2,
       "tags": [
         {
           "id": "afae0064-4bb0-4735-93f2-8c5c4e7e3287",
@@ -28583,7 +28556,33 @@
           "color": "#3b82f6"
         }
       ],
-      "source": "lua.tools"
+      "source": "merged",
+      "fixes": [
+        {
+          "id": "orphan-online-1",
+          "title": "Online fix",
+          "description": null,
+          "tags": [
+            {
+              "id": "afae0064-4bb0-4735-93f2-8c5c4e7e3287",
+              "name": "Online Fix",
+              "slug": "online-fix",
+              "color": "#3b82f6"
+            }
+          ],
+          "hasManifest": false,
+          "hasFix": true,
+          "manifestFilename": null,
+          "fixFilename": "5335510.zip",
+          "createdAt": "2026-11-21",
+          "downloads": {
+            "fix": {
+              "url": "https://github.com/ArthurS357/LuaTools-Catalog/releases/download/fixes-v1/5335510.zip",
+              "sha256": "62965e28f02441ad9771d5442f0dbb972d2bf9a6da8783184822570efe6ded95"
+            }
+          }
+        }
+      ]
     }
   ]
 }
