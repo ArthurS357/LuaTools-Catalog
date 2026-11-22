@@ -3,21 +3,21 @@
   "tags": [],
   "games": [
     {
-      "appid": "391540",
-      "name": "Undertale",
-      "header_image": "https://cdn.akamai.steamstatic.com/steam/apps/391540/header.jpg",
-      "tags": [],
+      "appid": "5335510",
+      "name": "Moon Sweepers",
+      "header_image": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/5335510/41e1e802dfc069cc245b91043e451a2f9ffa80e3/header.jpg",
+      "tags": ["online-fix"],
       "fixes": [
         {
-          "id": "f2-test-undertale",
-          "title": "F2 test fix (Undertale)",
-          "description": "Harmless test artifact for the F2 live test.",
-          "tags": [],
+          "id": "orphan-online-1",
+          "title": "Online fix",
+          "description": null,
+          "tags": ["online-fix"],
           "created_at": "2026-11-21",
           "fix": {
-            "url": "https://github.com/ArthurS357/LuaTools-Catalog/releases/download/f2-test/undertale-f2-test.zip",
-            "sha256": "b795a872bb8e53ac630a69fbf22b0447d5440ded4ada23617796c145683b7fd8",
-            "filename": "undertale-f2-test.zip"
+            "url": "https://github.com/ArthurS357/LuaTools-Catalog/releases/download/fixes-v1/5335510.zip",
+            "sha256": "62965e28f02441ad9771d5442f0dbb972d2bf9a6da8783184822570efe6ded95",
+            "filename": "5335510.zip"
           }
         }
       ]
