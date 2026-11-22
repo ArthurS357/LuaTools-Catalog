@@ -151,7 +151,7 @@ def parse_upstream(body: bytes) -> tuple[list[JsonObj], list[JsonObj]]:
 
 def load_orphans(path: Path) -> JsonObj:
     try:
-        doc = json.loads(path.read_text(encoding="utf-8"))
+        doc = json.loads(path.read_text(encoding="utf-8-sig"))  # utf-8-sig: PowerShell 5.1 writes a BOM
     except (OSError, ValueError) as exc:
         raise CatalogError(f"{path.name}: cannot read ({type(exc).__name__}: {exc})") from exc
     _need(isinstance(doc, dict), f"{path.name}: top level is not an object")

@@ -353,3 +353,34 @@ def test_check_mode_validates_the_orphans_against_the_current_catalog(paths: tup
     bad["fixes"][0]["fix"]["url"] = "http://example.com/fix.zip"
     write_orphans(paths[1], [bad])
     assert sc.check(paths[0], paths[1]) == 1
+
+
+def test_orphans_file_with_utf8_bom_is_accepted(paths: tuple[Path, Path]) -> None:
+    """Set-Content -Encoding utf8 on PowerShell 5.1 writes a BOM; it must not abort the sync."""
+    doc = {"schema_version": 1, "tags": [], "games": [orphan_game("200")]}
+    paths[1].write_bytes(b"\xef\xbb\xbf" + json.dumps(doc).encode("utf-8"))
+
+    assert sync(paths, upstream_body(upstream_game("100", "Upstream"))) == 0
+
+    assert set(by_appid(read(paths[0]))) == {"100", "200"}
+
+
+@pytest.mark.parametrize(
+    "header",
+    [
+        "http://cdn.example.com/h.jpg",
+        "https://127.0.0.1/h.jpg",
+        "https://[::1]/h.jpg",
+        "https://192.168.0.10/h.jpg",
+        "https://localhost/h.jpg",
+        "https://cache.local/h.jpg",
+        "https://intranet/h.jpg",
+    ],
+)
+def test_orphan_header_image_follows_the_gui_contract(paths: tuple[Path, Path], header: str) -> None:
+    game = orphan_game("200")
+    game["header_image"] = header
+    write_orphans(paths[1], [game])
+
+    assert sync(paths, upstream_body(upstream_game("100", "Upstream"))) == 1
+    assert not paths[0].exists()
