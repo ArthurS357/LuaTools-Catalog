@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-23T16:50:17Z",
+  "generated_at": "2026-11-25T01:45:31Z",
   "tags": [
     {
       "id": "fe3f2ad5-a66d-4fa1-8d08-c01dfc39e303",
@@ -27536,14 +27536,8 @@
       "appid": "4115450",
       "name": "Phantom Blade Zero",
       "header_image": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/4115450/7f882f889630270d3d3fb93825ac6f55b55e7a6c/header.jpg?t=1793261976",
-      "fixCount": 2,
+      "fixCount": 1,
       "tags": [
-        {
-          "id": "119e2730-c75c-480c-9ee5-2784bf01872f",
-          "name": "SteamTools Achievements Fix",
-          "slug": "steamtools-achievements-fix",
-          "color": "#eab308"
-        },
         {
           "id": "945faae4-7bc3-4d24-8b43-5828985420c6",
           "name": "voices38 (crack)",
